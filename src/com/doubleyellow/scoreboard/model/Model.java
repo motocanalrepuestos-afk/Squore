@@ -721,6 +721,99 @@ public abstract class Model implements Serializable
     public String getTimeoutInfo(Player p) {
         return m_player2TimeoutInfo.get(p);
     }
+    //-------------------------------
+    // Video Ref (video review)
+    //-------------------------------
+
+    /** Number of Video Refs each player has at the start of a match */
+    public static final int NR_OF_VIDEO_REFS_PER_MATCH = 2;
+    /** Number of Video Refs each player has after a 'reset' (score reaching e.g. 10-10, or start of game 5) */
+    public static final int NR_OF_VIDEO_REFS_AFTER_RESET = 1;
+    /** Zero based index of the game at the start of which the Video Refs are reset: game 5 */
+    public static final int VIDEO_REF_RESET_AT_GAME_ZB = 4;
+
+    /**
+     * Records that a Video Ref was requested by the specified player.
+     * Should be followed by recording the actual decision with recordAppealAndCall().
+     * The Video Ref is stored as a separate (misc) line in the score history, so it is persisted to JSON and is undone together with the call it led to.
+     */
+    public void recordVideoRef(Player pRequestedBy, boolean bDecisionStands) {
+        if ( pRequestedBy == null ) { return; }
+        if ( ( gameHasStarted() == false ) && (ListUtil.size(m_lPlayer2GamesWon) <= 1)) {
+            // first thing in the match is a video ref: adjust date and time if appropriate
+            adjustTheWhenObjectIfAppropriate(GameTiming.ChangedBy.FirstScoreOfGameEntered);
+        }
+        Misc misc = bDecisionStands ? Misc.VRL : Misc.VRK;
+        addScoreLine(new ScoreLine(pRequestedBy, misc), true);
+    }
+
+    public int getNrOfVideoRefsLeftFor(Player p) {
+        Map<Player, Integer> mLeft = getNrOfVideoRefsLeft();
+        return MapUtil.getInt(mLeft, p, 0);
+    }
+
+    /**
+     * Calculates the nr of Video Refs left for each player by replaying the score history:
+     * - each player starts with 2
+     * - a Video Ref for which the decision stands costs one (never below zero)
+     * - an overturned decision does not cost anything
+     * - when the score reaches 10-10 (nr of points to win game minus one) in any game, both players are set to exactly 1 (once per game)
+     * - when game 5 starts, both players are set to exactly 1
+     * Because it is derived from the score history, it automatically survives undo, app restart and stored matches.
+     */
+    public Map<Player, Integer> getNrOfVideoRefsLeft() {
+        Map<Player, Integer> mLeft = new HashMap<>();
+        mLeft.put(Player.A, NR_OF_VIDEO_REFS_PER_MATCH);
+        mLeft.put(Player.B, NR_OF_VIDEO_REFS_PER_MATCH);
+
+        List<List<ScoreLine>> lGames = m_lGamesScorelineHistory;
+        if ( lGames == null ) { return mLeft; }
+
+        final int iResetAtScore = getNrOfPointsToWinGame() - 1;
+        for ( int g = 0; g < lGames.size(); g++ ) {
+            if ( g == VIDEO_REF_RESET_AT_GAME_ZB ) {
+                mLeft.put(Player.A, NR_OF_VIDEO_REFS_AFTER_RESET);
+                mLeft.put(Player.B, NR_OF_VIDEO_REFS_AFTER_RESET);
+            }
+            List<ScoreLine> lGame = lGames.get(g);
+            if ( lGame == null ) { continue; }
+
+            Map<Player, Integer> mScore = new HashMap<>();
+            mScore.put(Player.A, getGameStartScoreOffset(Player.A, g));
+            mScore.put(Player.B, getGameStartScoreOffset(Player.B, g));
+            boolean bResetDoneInGame = false;
+            for ( ScoreLine sl : lGame ) {
+                if ( sl == null ) { continue; }
+                if ( sl.isVideoRefLost() ) {
+                    Player p = sl.getCallTargetPlayer();
+                    int iLeft = MapUtil.getInt(mLeft, p, 0);
+                    mLeft.put(p, Math.max(0, iLeft - 1));
+                    continue;
+                }
+                if ( sl.isCall() || sl.isMisc() || sl.isBrokenEquipment() ) { continue; }
+                Player  pScorer = sl.getScoringPlayer();
+                Integer iScore  = sl.getScore();
+                if ( (pScorer == null) || (iScore == null) ) { continue; }
+                mScore.put(pScorer, iScore);
+                if ( (bResetDoneInGame == false) && (iResetAtScore > 0)
+                  && (MapUtil.getInt(mScore, Player.A, 0) == iResetAtScore)
+                  && (MapUtil.getInt(mScore, Player.B, 0) == iResetAtScore) ) {
+                    mLeft.put(Player.A, NR_OF_VIDEO_REFS_AFTER_RESET);
+                    mLeft.put(Player.B, NR_OF_VIDEO_REFS_AFTER_RESET);
+                    bResetDoneInGame = true;
+                }
+            }
+        }
+        return mLeft;
+    }
+
+    /** returns true if the score in the game in progress is exactly the 'Video Ref reset' score (10-10 for games to 11) */
+    public boolean isVideoRefResetScore() {
+        final int iResetAtScore = getNrOfPointsToWinGame() - 1;
+        if ( iResetAtScore <= 0 ) { return false; }
+        return (getScore(Player.A) == iResetAtScore) && (getScore(Player.B) == iResetAtScore);
+    }
+
     public String getLastTimeoutInfo(Player p) {
         String sTimeoutInfo = m_player2TimeoutInfo.get(p);
         if ( StringUtil.isNotEmpty(sTimeoutInfo) ) {
@@ -1131,6 +1224,11 @@ public abstract class Model implements Serializable
                 for(OnComplexChangeListener l:onComplexChangeListeners) {
                     l.OnChanged();
                 }
+                // a Video Ref line always directly precedes the call it led to: undo them together
+                ScoreLine slNowLast = ListUtil.getLast(lGameScoreHistory);
+                if ( (slNowLast != null) && slNowLast.isVideoRef() ) {
+                    undoLast();
+                }
             } else {
                 int iDelta = -1;
                 Player removeScoringPlayer  = slRemoved.getScoringPlayer();
@@ -1166,7 +1264,9 @@ public abstract class Model implements Serializable
                     }
                 }
 
-                if ( lGameScoreHistory.size() != 0 ) {
+                if ( slRemoved.isVideoRef() ) {
+                    // a Video Ref line does not change server or serve side: nothing to recalculate
+                } else if ( lGameScoreHistory.size() != 0 ) {
                     ScoreLine lastValid = getLastScoreLine();
                     if ( lastValid.isCall() ) {
                         if ( lastValid.call.hasScoreAffect() ) {
@@ -2991,7 +3091,7 @@ public abstract class Model implements Serializable
                 }
 
               //MapUtil.increaseCounter(m_scoreOfGameInProgress, scoreLine.getScoringPlayer()); // this does not work if we 'adjust' the score
-                if ( scoreLine.isCall() == false && scoreLine.isBrokenEquipment() == false ) {
+                if ( scoreLine.isCall() == false && scoreLine.isBrokenEquipment() == false && scoreLine.isMisc() == false ) {
                     scoreOfGameInProgress.put(scoreLine.getScoringPlayer(), scoreLine.getScore());
                 }
             }

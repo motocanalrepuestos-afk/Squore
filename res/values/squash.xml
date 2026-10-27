@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="lbl_Scoring_PointWhenServing__Squash">Hand-in/hand-out</string>
+    <!-- Video Ref in score history: overturned (VR kept) / decision stands (VR lost) -->
+    <string name="video_ref_kept_abbreviation">VR+</string>
+    <string name="video_ref_lost_abbreviation">VR-</string>
 
     <string name="lbl_marker">Marker</string>
     <string name="lbl_assessor">Assessor</string>

@@ -70,6 +70,14 @@ public class ScoreLine implements Serializable
     public boolean isTimeout() {
         return ( this.callTargetPlayer != null ) && ( Misc.TO.equals(this.misc) );
     }
+    /** true if this line records a Video Ref (video review) request (outcome stands or overturned) */
+    public boolean isVideoRef() {
+        return ( this.callTargetPlayer != null ) && ( Misc.VRK.equals(this.misc) || Misc.VRL.equals(this.misc) );
+    }
+    /** true if this line records a Video Ref (video review) for which the decision stood: the requesting player lost one Video Ref */
+    public boolean isVideoRefLost() {
+        return ( this.callTargetPlayer != null ) && Misc.VRL.equals(this.misc);
+    }
     public boolean isAppealWithPoint() {
         return ( this.callTargetPlayer != null ) && ( this.call != null ) && (this.call.hasScoreAffect());
     }
