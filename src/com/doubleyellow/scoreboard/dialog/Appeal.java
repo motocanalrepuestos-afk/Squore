@@ -113,6 +113,19 @@ public class Appeal extends BaseAlertDialog
         ll.addView(vStroke, llpMargin1Weight1);
         ll.addView(vYesLet, llpMargin1Weight1);
         ll.addView(vNoLet , llpMargin1Weight1);
+
+        // Video Ref (video review) requested by the appealing player
+        if ( VideoRef.isActive(context) ) {
+            int iVideoRefsLeft = matchModel.getNrOfVideoRefsLeftFor(appealingPlayer);
+            String sCaption = PreferenceValues.getOAString(context, R.string.oa_vr_button_x, iVideoRefsLeft);
+            final TextView vVideoRef = getActionView(sCaption, BTN_VIDEO_REF, 0, iIconSize, dIconPosition);
+            if ( iVideoRefsLeft <= 0 ) {
+                // no more video refs left for this player: show greyed out and do not allow to click
+                vVideoRef.setEnabled(false);
+                vVideoRef.setAlpha(0.4f);
+            }
+            ll.addView(vVideoRef, llpMargin1Weight1);
+        }
         adb.setView(ll);
 
         ColorPrefs.setColor(ll);
@@ -149,7 +162,14 @@ public class Appeal extends BaseAlertDialog
     public final static int BTN_STROKE  = DialogInterface.BUTTON_POSITIVE;
     public final static int BTN_YES_LET = DialogInterface.BUTTON_NEUTRAL;
     public final static int BTN_NO_LET  = DialogInterface.BUTTON_NEGATIVE;
+    public final static int BTN_VIDEO_REF = 1001;
     @Override public void handleButtonClick(int which) {
+        if ( which == BTN_VIDEO_REF ) {
+            if ( matchModel.getNrOfVideoRefsLeftFor(appealingPlayer) > 0 ) {
+                scoreBoard.showVideoRef(appealingPlayer);
+            }
+            return;
+        }
         Call call = null;
         switch (which) {
             case BTN_STROKE  : call = Call.ST; break;

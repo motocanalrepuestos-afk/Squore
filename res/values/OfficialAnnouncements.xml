@@ -73,6 +73,21 @@
     <string name="oal_misconduct_by">Misconduct by %s</string>
     <string name="oal_let_requested_by">Let requested by %s</string>
 
+    <!-- Video Ref (video review) -->
+    <string name="oal_video_ref">Video Ref</string>
+    <string name="oa_vr_button_x">VR (%1$d)</string>
+    <string name="oal_vr_on_which_decision">Decision under review?</string>
+    <string name="oal_vr_new_decision">New decision</string>
+    <string name="oa_vr_let">Yes Let</string>
+    <string name="oa_vr_no_let_to_x">No Let to %1$s</string>
+    <string name="oa_vr_requested_by_x_on_decision_y">Video review requested by %1$s on the decision %2$s</string>
+    <string name="oa_vr_overturned">Overturned</string>
+    <string name="oa_vr_stands">Decision stands</string>
+    <string name="oa_vr_decision_stands_x__y_has_n_left">Decision stands: %1$s. %2$s has %3$d video reviews remaining.</string>
+    <string name="oa_vr_decision_overturned_x__y_retains">Decision overturned: %1$s. %2$s retains the video review.</string>
+    <string name="oa_vr_two_clear_points__each_has_1">A player must win by two clear points. Each player has 1 video review available.</string>
+    <string name="oa_vr_each_has_1">Each player has 1 video review available.</string>
+
     <string-array name="FirstSecondThirdFourthFifth">
         <item>first</item>
         <item>second</item>

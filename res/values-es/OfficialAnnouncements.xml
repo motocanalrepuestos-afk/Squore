@@ -78,6 +78,21 @@
     <string name="oal_misconduct_by">Mala conducta por %s</string>
     <string name="oal_let_requested_by">Let solicitado por %s</string>
 
+    <!-- Video Ref -->
+    <string name="oal_video_ref">Video Ref</string>
+    <string name="oa_vr_button_x">VR (%1$d)</string>
+    <string name="oal_vr_on_which_decision">¿Sobre qué decisión?</string>
+    <string name="oal_vr_new_decision">Nueva decisión</string>
+    <string name="oa_vr_let">Let</string>
+    <string name="oa_vr_no_let_to_x">No Let para %1$s</string>
+    <string name="oa_vr_requested_by_x_on_decision_y">Video Ref solicitado por %1$s sobre la decisión de %2$s</string>
+    <string name="oa_vr_overturned">Se revoca</string>
+    <string name="oa_vr_stands">Se mantiene</string>
+    <string name="oa_vr_decision_stands_x__y_has_n_left">Se mantiene la decisión: %1$s. A %2$s le quedan %3$d Video Ref.</string>
+    <string name="oa_vr_decision_overturned_x__y_retains">Se revoca la decisión: %1$s. %2$s conserva su Video Ref.</string>
+    <string name="oa_vr_two_clear_points__each_has_1">Un jugador deberá ganar por dos puntos de diferencia. Cada jugador cuenta con 1 Video Ref disponible.</string>
+    <string name="oa_vr_each_has_1">Cada jugador cuenta con 1 Video Ref disponible.</string>
+
     <string-array name="FirstSecondThirdFourthFifth">
         <item>primero</item>
         <item>segundo</item>

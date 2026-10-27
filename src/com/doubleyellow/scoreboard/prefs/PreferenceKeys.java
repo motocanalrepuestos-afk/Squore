@@ -268,6 +268,8 @@ public enum PreferenceKeys {
         showChoosenDecisionShortly(Boolean.class, false),
             showChoosenDecisionDuration_Appeal(Integer.class, false),
             showChoosenDecisionDuration_Conduct(Integer.class, false),
+        /** Squash only: allow players to request a Video Ref (video review) via the Appeal dialog */
+        useVideoRef(Boolean.class, false),
         showAvatarOn(EnumSet.class, false),
             hideAvatarForSameImage(Boolean.class, false),
         showCountryAs(EnumSet.class, false),

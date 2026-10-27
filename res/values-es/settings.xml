@@ -368,4 +368,7 @@ Lista de Árbitros</string>
     <string name="pref_numberOfServiceCountUpOrDown_summary">Abajo: número de servicios restantes. Arriba: servicios consecutivos a realizar</string>
     <string name="number_of_serves_per_player">Número de saques por jugador</string>
 
+    <string name="pref_useVideoRef">Video Ref</string>
+    <string name="pref_useVideoRef_summary">Permitir que los jugadores pidan Video Ref (2 por partido; se conserva si se revoca la decisión; vuelve a 1 en 10-10 y al empezar el 5.º game)</string>
+
 </resources>

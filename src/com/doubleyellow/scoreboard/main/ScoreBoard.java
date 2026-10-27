@@ -2459,6 +2459,13 @@ public class ScoreBoard extends XActivity implements /*NfcAdapter.CreateNdefMess
             //if ( iDelta == 1 ) {
                 speakScore();
             //}
+
+            // Video Ref: at 10-10 both players are reset to exactly 1 video ref (count is derived from score history by the model)
+            if ( (iDelta == 1) && (eInitModelListeners_Status.equals(ActionStatus.InProgress) == false) ) {
+                if ( VideoRef.isActive(ScoreBoard.this) && matchModel.isVideoRefResetScore() ) {
+                    showVideoRefAnnouncement(VideoRefAnnouncement.Reason.TieBreak);
+                }
+            }
         }
     }
 
@@ -2639,6 +2646,13 @@ public class ScoreBoard extends XActivity implements /*NfcAdapter.CreateNdefMess
                     autoShowGameDetails();
                     autoShowHandicap();
                     autoShowOfficialAnnouncement(AnnouncementTrigger.StartOfGame);
+                }
+
+                // Video Ref: at the start of game 5 both players are reset to exactly 1 video ref
+                if ( (eInitModelListeners_Status.equals(ActionStatus.InProgress) == false)
+                  && VideoRef.isActive(ScoreBoard.this)
+                  && (matchModel.getNrOfFinishedGames() == Model.VIDEO_REF_RESET_AT_GAME_ZB) ) {
+                    showVideoRefAnnouncement(VideoRefAnnouncement.Reason.StartOfGame5);
                 }
             }
 
@@ -3911,6 +3925,32 @@ public class ScoreBoard extends XActivity implements /*NfcAdapter.CreateNdefMess
         Appeal appeal = new Appeal(this, matchModel, this);
         appeal.init(appealingPlayer);
         show(appeal);
+    }
+
+    /** Invoked from Appeal dialog: start the Video Ref (video review) flow for the player requesting it */
+    public void showVideoRef(Player requestingPlayer) {
+        if ( Brand.isNotSquash() ) { return; }
+        if ( matchModel == null ) { return; }
+        if ( warnModelIsLocked() ) { return; }
+        VideoRef videoRef = new VideoRef(this, matchModel, this);
+        videoRef.init(requestingPlayer);
+        show(videoRef);
+    }
+
+    /** Invoked from VideoRef dialog: record the video ref and the (original or new) decision */
+    public void recordVideoRef(Player requestingPlayer, boolean bDecisionStands, Player appellant, Call call) {
+        if ( warnModelIsLocked() ) { return; }
+        if ( matchModel == null ) { return; }
+        matchModel.recordVideoRef(requestingPlayer, bDecisionStands);
+        recordAppealAndCall(appellant, call);
+    }
+
+    private void showVideoRefAnnouncement(VideoRefAnnouncement.Reason reason) {
+        if ( VideoRef.isActive(this) == false ) { return; }
+        if ( matchModel == null ) { return; }
+        VideoRefAnnouncement announcement = new VideoRefAnnouncement(this, matchModel, this);
+        announcement.init(reason);
+        addToDialogStack(announcement);
     }
 
     private void showRallyEndStats(Player scoringPlayer, Call call) {

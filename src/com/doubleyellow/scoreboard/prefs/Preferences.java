@@ -863,6 +863,7 @@ public class Preferences extends Activity {
                 hideRemovePreference(psgApp, PreferenceKeys.scorelineLayout);                  // not interesting enough for racketlon, badminton and tabletennis
 
                 hideRemovePreference(psgBeh, PreferenceKeys.showChoosenDecisionShortly);      // not really for racketlon and tabletennis
+                hideRemovePreference(psgBeh, PreferenceKeys.useVideoRef);                     // video ref only for squash
                 if ( PreferenceValues.announcementLanguageDeviates(getActivity()) == false ) {
                     hideRemovePreference(psgBeh, PreferenceKeys.officialAnnouncementsLanguage);   // not really for racketlon and tabletennis
                 }

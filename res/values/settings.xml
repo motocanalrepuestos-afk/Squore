@@ -517,4 +517,7 @@
     <string name="pref_numberOfServiceCountUpOrDown_summary">Down: number of serves left. Up: consecutive serves to be performed</string>
     <string name="number_of_serves_per_player">Number of serves per player</string>
 
+    <string name="pref_useVideoRef">Video Ref</string>
+    <string name="pref_useVideoRef_summary">Allow players to request a video review (2 per match; kept if the decision is overturned; reset to 1 at 10-10 and at the start of game 5)</string>
+
 </resources>

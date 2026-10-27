@@ -293,6 +293,10 @@ public class PreferenceValues extends RWValues
         }
         return iIconSize;
     }
+    /** Squash only: allow players to request a Video Ref (video review) via the Appeal dialog */
+    public static boolean useVideoRef(Context context) {
+        return _getBoolean(PreferenceKeys.useVideoRef, context, R.bool.useVideoRef_default);
+    }
     public static boolean showChoosenDecisionShortly(Context context) {
         return _getBoolean(PreferenceKeys.showChoosenDecisionShortly, context, R.bool.showChoosenDecisionShortly_default);
     }
@@ -856,6 +860,19 @@ public class PreferenceValues extends RWValues
             R.string.oa_conduct_game,
             R.string.oa_conduct_match,
             R.string.oal_let_requested_by,
+            R.string.oal_video_ref,
+            R.string.oa_vr_button_x,
+            R.string.oal_vr_on_which_decision,
+            R.string.oal_vr_new_decision,
+            R.string.oa_vr_let,
+            R.string.oa_vr_no_let_to_x,
+            R.string.oa_vr_requested_by_x_on_decision_y,
+            R.string.oa_vr_overturned,
+            R.string.oa_vr_stands,
+            R.string.oa_vr_decision_stands_x__y_has_n_left,
+            R.string.oa_vr_decision_overturned_x__y_retains,
+            R.string.oa_vr_two_clear_points__each_has_1,
+            R.string.oa_vr_each_has_1,
             R.string.oal_misconduct_by,
             R.string.oal_warmup,
             R.string.oal_pause,

@@ -198,6 +198,7 @@ http://developer.android.com/guide/practices/screens_support.html
     <bool name="hapticFeedbackPerPoint_default">false</bool>
     <bool name="hapticFeedbackOnGameEnd_default">false</bool>
     <bool name="showChoosenDecisionShortly_default">true</bool>
+    <bool name="useVideoRef_default">true</bool>
     <bool name="showScoringHistoryInMainScreen_default">true</bool>
     <bool name="indicateGameBall_default">true</bool>
     <bool name="floatingMessageForGameBall_default">true</bool>

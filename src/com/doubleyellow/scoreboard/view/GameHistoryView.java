@@ -154,7 +154,7 @@ public class GameHistoryView extends ScrollView
             }
             for(String sValue: saScore) {
                 TextView tv = new TextView(getContext());
-                if ( line.isCall() || line.isBrokenEquipment() ) {
+                if ( line.isCall() || line.isBrokenEquipment() || line.isMisc() ) {
                     // little smaller because call is double letters YL, NL, ST, CW, CS, CG, CM
                     tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, textSizePx * 2 / 3);
                 } else {

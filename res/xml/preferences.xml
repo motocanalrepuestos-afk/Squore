@@ -831,6 +831,13 @@
                 android:summary="@string/pref_showChoosenDecisionShortly_summary"
                 android:defaultValue="@bool/showChoosenDecisionShortly_default"
                 />
+            <CheckBoxPreference
+                android:icon="@drawable/dummy"
+                android:key="useVideoRef"
+                android:title="@string/pref_useVideoRef"
+                android:summary="@string/pref_useVideoRef_summary"
+                android:defaultValue="@bool/useVideoRef_default"
+                />
             <EditTextPreference
                 android:icon="@drawable/dummy"
                 android:key="OfficialRulesURLs"
