@@ -92,9 +92,19 @@ android {
         phoneTabletPre24  { manifest { srcFile 'AndroidManifestALLPhoneTabletPre22.xml' } }
         phoneTabletPost25 { manifest { srcFile 'AndroidManifestSquore.xml'              } }
         wearOs            { manifest { srcFile 'AndroidManifestSquore.xml'              } }
+        // Video Ref fork: debug build gets its own app label ('Squore VR') so it can be installed next to the official Squore
+        debug             { res { srcDir 'res-videoref-debug' } }
     }
 
     signingConfigs {
+        // Video Ref fork: fixed debug keystore (standard android debug passwords, NOT secret) so that each CI build can be installed as an update of the previous one
+        videoRefDebug {
+            storeFile     file('videoref-debug.keystore')
+            storeType     'pkcs12'
+            storePassword 'android'
+            keyAlias      'androiddebugkey'
+            keyPassword   'android'
+        }
         release {
             try {
                 storeFile file(KEYSTORE_PATH)
@@ -140,6 +150,12 @@ android {
         }
     }
     buildTypes {
+        // Video Ref fork: debug apk that installs alongside the official Squore app
+        debug {
+            applicationIdSuffix '.videoref'
+            versionNameSuffix   '-videoref'
+            signingConfig = signingConfigs.videoRefDebug // written with '=' on purpose: build.gradle.adapt.for.github.workflow.sh only comments out 'signingConfig signingConfigs...'
+        }
         release {
             signingConfig signingConfigs.release // comment out this line if you are just trying a simple build that does need to be signed
             //embedMicroApp true

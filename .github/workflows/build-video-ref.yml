@@ -1,0 +1,56 @@
+#
+# Builds a DEBUG apk of the Video Ref fork of Squore (this repository, not obbimi/Squore)
+# - no release keystore or google-services.json needed
+# - the apk is signed with the (non secret) debug keystore videoref-debug.keystore committed in this repo
+# - applicationId gets suffix '.videoref' and app label 'Squore VR', so it installs next to the official Squore app
+#
+# Download the apk: GitHub > Actions > 'Build Squore Video Ref debug APK' > latest run > Artifacts > squore-video-ref-debug-apk
+#
+name: Build Squore Video Ref debug APK
+run-name: Build Squore Video Ref debug APK (${{ github.ref_name }})
+
+on:
+  push:
+    branches:
+      - video-ref
+  workflow_dispatch: # run manually
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout the code of this repository
+      uses: actions/checkout@v4
+
+    - name: Setup Java JDK
+      uses: actions/setup-java@v4
+      with:
+        java-version: 17
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: Prepare for build
+      run: |
+        set -x
+        chmod +x ./gradlew ./build.gradle.adapt.for.github.workflow.sh
+        # without GSM key: do not use com.google.gms, comment out release signing (that would throw without keystore), create dummy res/raw/squore_iddo.zip
+        ./build.gradle.adapt.for.github.workflow.sh ""
+        ls -l res/raw/squore_iddo.zip
+        echo "ANDROID_HOME=${ANDROID_HOME} ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT}"
+
+    - name: Build debug .apk (phone/tablet, Android 7.1+)
+      run: |
+        ./gradlew --no-daemon --stacktrace assemblePhoneTabletPost25Debug
+
+    - name: List generated .apk files
+      run: |
+        find build/outputs -name '*.apk' -ls
+
+    - name: Upload .apk as workflow artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: squore-video-ref-debug-apk
+        path: build/outputs/apk/**/*.apk
+        if-no-files-found: error
+        retention-days: 30

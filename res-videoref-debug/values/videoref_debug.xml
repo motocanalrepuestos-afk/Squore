@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Only used for the debug build of the Video Ref fork: different app name so it can be installed next to the official Squore -->
+<resources>
+    <string name="app_name_short_brand__Squash">Squore VR</string>
+</resources>
