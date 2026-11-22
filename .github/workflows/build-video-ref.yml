@@ -4,7 +4,9 @@
 # - the apk is signed with the (non secret) debug keystore videoref-debug.keystore committed in this repo
 # - applicationId gets suffix '.videoref' and app label 'Squore VR', so it installs next to the official Squore app
 #
-# Download the apk: GitHub > Actions > 'Build Squore Video Ref debug APK' > latest run > Artifacts > squore-video-ref-debug-apk
+# Download the apk (no login needed, direct link to share with referees):
+#   https://github.com/motocanalrepuestos-afk/Squore/releases/latest/download/Squore-VR.apk
+# Also available as workflow artifact: GitHub > Actions > latest run > Artifacts > squore-video-ref-debug-apk
 #
 name: Build Squore Video Ref debug APK
 run-name: Build Squore Video Ref debug APK (${{ github.ref_name }})
@@ -14,6 +16,9 @@ on:
     branches:
       - video-ref
   workflow_dispatch: # run manually
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -54,3 +59,18 @@ jobs:
         path: build/outputs/apk/**/*.apk
         if-no-files-found: error
         retention-days: 30
+
+    - name: Publish .apk as release 'Squore VR' (direct download link)
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -x
+        APK=$(find build/outputs/apk -name '*.apk' | head -1)
+        cp "$APK" Squore-VR.apk
+        NOTES="Squore con Video Ref. Descarga directa: https://github.com/${{ github.repository }}/releases/latest/download/Squore-VR.apk (build ${{ github.run_number }}, commit ${GITHUB_SHA::7})"
+        if gh release view squore-vr >/dev/null 2>&1; then
+          gh release upload squore-vr Squore-VR.apk --clobber
+          gh release edit squore-vr --notes "$NOTES" --latest
+        else
+          gh release create squore-vr Squore-VR.apk --title "Squore VR" --notes "$NOTES" --latest --target "$GITHUB_SHA"
+        fi
