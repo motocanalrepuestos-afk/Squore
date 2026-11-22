@@ -757,7 +757,9 @@ public abstract class Model implements Serializable
      * - each player starts with 2
      * - a Video Ref for which the decision stands costs one (never below zero)
      * - an overturned decision does not cost anything
-     * - when the score reaches 10-10 (nr of points to win game minus one) in any game, both players are set to exactly 1 (once per game)
+     * - when the score reaches 10-10 (nr of points to win game minus one) in any game, both players get exactly 1 for the tie-break only:
+     *   the tie-break Video Ref does not add to the match count and is not taken from it.
+     *   When that game ends, both players go back to the Video Refs they had left in the match before the tie-break.
      * - when game 5 starts, both players are set to exactly 1
      * Because it is derived from the score history, it automatically survives undo, app restart and stored matches.
      */
@@ -781,13 +783,14 @@ public abstract class Model implements Serializable
             Map<Player, Integer> mScore = new HashMap<>();
             mScore.put(Player.A, getGameStartScoreOffset(Player.A, g));
             mScore.put(Player.B, getGameStartScoreOffset(Player.B, g));
-            boolean bResetDoneInGame = false;
+            Map<Player, Integer> mTieBreak = null; // non-null once 10-10 was reached in this game: Video Refs for the tie-break only
             for ( ScoreLine sl : lGame ) {
                 if ( sl == null ) { continue; }
                 if ( sl.isVideoRefLost() ) {
                     Player p = sl.getCallTargetPlayer();
-                    int iLeft = MapUtil.getInt(mLeft, p, 0);
-                    mLeft.put(p, Math.max(0, iLeft - 1));
+                    Map<Player, Integer> mCount = (mTieBreak != null) ? mTieBreak : mLeft;
+                    int iLeft = MapUtil.getInt(mCount, p, 0);
+                    mCount.put(p, Math.max(0, iLeft - 1));
                     continue;
                 }
                 if ( sl.isCall() || sl.isMisc() || sl.isBrokenEquipment() ) { continue; }
@@ -795,14 +798,20 @@ public abstract class Model implements Serializable
                 Integer iScore  = sl.getScore();
                 if ( (pScorer == null) || (iScore == null) ) { continue; }
                 mScore.put(pScorer, iScore);
-                if ( (bResetDoneInGame == false) && (iResetAtScore > 0)
+                if ( (mTieBreak == null) && (iResetAtScore > 0)
                   && (MapUtil.getInt(mScore, Player.A, 0) == iResetAtScore)
                   && (MapUtil.getInt(mScore, Player.B, 0) == iResetAtScore) ) {
-                    mLeft.put(Player.A, NR_OF_VIDEO_REFS_AFTER_RESET);
-                    mLeft.put(Player.B, NR_OF_VIDEO_REFS_AFTER_RESET);
-                    bResetDoneInGame = true;
+                    mTieBreak = new HashMap<>();
+                    mTieBreak.put(Player.A, NR_OF_VIDEO_REFS_AFTER_RESET);
+                    mTieBreak.put(Player.B, NR_OF_VIDEO_REFS_AFTER_RESET);
                 }
             }
+            // while the tie-break is still being played (last game, not finished), the tie-break counts are what is left
+            boolean bLastGame = (g == lGames.size() - 1);
+            if ( (mTieBreak != null) && bLastGame && (isPossibleGameVictoryFor() == null) ) {
+                return mTieBreak;
+            }
+            // tie-break over (or game finished): back to the match counts, mLeft untouched by the tie-break
         }
         return mLeft;
     }
