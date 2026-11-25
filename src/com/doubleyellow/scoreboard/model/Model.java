@@ -816,6 +816,38 @@ public abstract class Model implements Serializable
         return mLeft;
     }
 
+    /**
+     * Referee decision statistics for the whole match (Patricio's 'densidad de decisiones'):
+     * returns {yes lets, no lets, strokes, rallies}.
+     * Only YL, NL and ST are decisions (conduct calls and Video Ref lines are not; after a Video Ref the final call is the one recorded).
+     * Every point is one rally and every yes let adds one extra rally (it is replayed). Points awarded by a conduct stroke are not rallies.
+     */
+    public int[] getDecisionStats() {
+        int iYL = 0, iNL = 0, iST = 0, iPoints = 0;
+        List<List<ScoreLine>> lGames = m_lGamesScorelineHistory;
+        if ( lGames == null ) { return new int[] { 0, 0, 0, 0 }; }
+        for ( List<ScoreLine> lGame : lGames ) {
+            if ( lGame == null ) { continue; }
+            boolean bSkipNextPoint = false;
+            for ( ScoreLine sl : lGame ) {
+                if ( sl == null ) { continue; }
+                if ( sl.isCall() ) {
+                    Call c = sl.getCall();
+                    if      ( Call.YL.equals(c) ) { iYL++; }
+                    else if ( Call.NL.equals(c) ) { iNL++; }
+                    else if ( Call.ST.equals(c) ) { iST++; }
+                    else if ( c != null && c.isConduct() && c.hasScoreAffect() ) { bSkipNextPoint = true; }
+                    continue;
+                }
+                if ( sl.isMisc() || sl.isBrokenEquipment() ) { continue; }
+                if ( sl.getScoringPlayer() == null || sl.getScore() == null ) { continue; }
+                if ( bSkipNextPoint ) { bSkipNextPoint = false; continue; }
+                iPoints++;
+            }
+        }
+        return new int[] { iYL, iNL, iST, iPoints + iYL };
+    }
+
     /** returns true if the score in the game in progress is exactly the 'Video Ref reset' score (10-10 for games to 11) */
     public boolean isVideoRefResetScore() {
         final int iResetAtScore = getNrOfPointsToWinGame() - 1;

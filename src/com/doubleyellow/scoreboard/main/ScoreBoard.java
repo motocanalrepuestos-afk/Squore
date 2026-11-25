@@ -600,6 +600,7 @@ public class ScoreBoard extends XActivity implements /*NfcAdapter.CreateNdefMess
                     view = inflater.inflate(R.layout.constraint, null);
                 }
                 frameLayout.addView(view);
+                addDecisionStatsFooter(frameLayout);
             }
         }
 
@@ -2179,6 +2180,7 @@ public class ScoreBoard extends XActivity implements /*NfcAdapter.CreateNdefMess
 
         //dbgmsg("Model listeners registered", 0, 0);
         eInitModelListeners_Status = ActionStatus.Done;
+        updateDecisionStats();
     }
 
     // ----------------------------------------------------
@@ -2396,6 +2398,7 @@ public class ScoreBoard extends XActivity implements /*NfcAdapter.CreateNdefMess
             }
             iBoard.updateScore(p, iTotal);
             iBoard.updateScoreHistory(iDelta == 1);
+            updateDecisionStats();
             if ( eInitModelListeners_Status.equals(ActionStatus.InProgress) == false ) {
                 if ( iDelta != 0 /* change score or undo */ ) {
                     cancelTimer();
@@ -2473,6 +2476,7 @@ public class ScoreBoard extends XActivity implements /*NfcAdapter.CreateNdefMess
     private class CallChangeListener implements Model.OnCallChangeListener {
         @Override public void OnCallChanged(Call call, Player appealingOrMisbehaving, Player pointAwardedTo, ConductType conductType) {
             iBoard.updateScoreHistory(true);
+            updateDecisionStats();
 
             if ( PreferenceValues.showChoosenDecisionShortly(ScoreBoard.this) ) {
                 iBoard.showChoosenDecision(call, appealingOrMisbehaving, conductType);
@@ -2496,6 +2500,7 @@ public class ScoreBoard extends XActivity implements /*NfcAdapter.CreateNdefMess
     private class BrokenEquipmentListener implements Model.OnBrokenEquipmentListener {
         @Override public void OnBrokenEquipmentChanged(BrokenEquipment equipment, Player affectedPlayer) {
             iBoard.updateScoreHistory(false);
+            updateDecisionStats();
         }
     }
     private void showPowerPlayDialog() {
@@ -2539,6 +2544,7 @@ public class ScoreBoard extends XActivity implements /*NfcAdapter.CreateNdefMess
         @Override public void OnChanged() {
             // e.g. an undo back into previous game has been done, or score has been adjusted
             iBoard.updateScoreHistory(false);
+            updateDecisionStats();
             iBoard.updateGameScores();
             for(Player p: Model.getPlayers()) {
                 iBoard.updateScore    (p, matchModel.getScore(p));
@@ -2657,6 +2663,8 @@ public class ScoreBoard extends XActivity implements /*NfcAdapter.CreateNdefMess
             }
 
             iBoard.updateScoreHistory(false);
+
+            updateDecisionStats();
             iBoard.updateGameScores();
 
             updateMicrophoneFloatButton();
@@ -3925,6 +3933,61 @@ public class ScoreBoard extends XActivity implements /*NfcAdapter.CreateNdefMess
         Appeal appeal = new Appeal(this, matchModel, this);
         appeal.init(appealingPlayer);
         show(appeal);
+    }
+
+    // ----------------------------------------------------
+    // ---- footer with referee decision statistics -------
+    // ----------------------------------------------------
+    private TextView m_tvDecisionStats = null;
+    private static final int DECISION_STATS_RED = 0xFFFF3B30;
+
+    /** footer on the main screen: YL=4  NL=5  ST=3  RA=80  DN=22% (squash only) */
+    private void addDecisionStatsFooter(FrameLayout frameLayout) {
+        m_tvDecisionStats = null;
+        if ( frameLayout == null ) { return; }
+        if ( Brand.isNotSquash() ) { return; }
+        TextView tv = new TextView(this);
+        tv.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, ViewUtil.isLandscapeOrientation(this) ? 14 : 18);
+        tv.setTypeface(android.graphics.Typeface.MONOSPACE, android.graphics.Typeface.BOLD);
+        tv.setTextColor(0xFFFFFFFF);
+        tv.setBackgroundColor(0x99000000);
+        tv.setGravity(android.view.Gravity.CENTER);
+        int iPad = (int) (6 * getResources().getDisplayMetrics().density);
+        tv.setPadding(iPad, iPad, iPad, iPad);
+        tv.setSingleLine(true);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT, android.view.Gravity.BOTTOM);
+        frameLayout.addView(tv, lp);
+        m_tvDecisionStats = tv;
+        updateDecisionStats();
+    }
+
+    /** YL/NL/ST are decisions; RA = points + yes lets (a let is replayed); DN = decisions / RA. Red: DN > 30%, or YL/NL/ST > 60% of the decisions */
+    private void updateDecisionStats() {
+        TextView tv = m_tvDecisionStats;
+        if ( tv == null ) { return; }
+        if ( matchModel == null ) { tv.setText(""); return; }
+        int[] d = matchModel.getDecisionStats();
+        int iYL = d[0], iNL = d[1], iST = d[2], iRA = d[3];
+        int iDec = iYL + iNL + iST;
+        int iDN  = (iRA > 0) ? Math.round(100f * iDec / iRA) : 0;
+        android.text.SpannableStringBuilder sb = new android.text.SpannableStringBuilder();
+        appendDecisionStat(sb, "YL=" + iYL, (iDec > 0) && (iYL * 100 > iDec * 60));
+        sb.append("  ");
+        appendDecisionStat(sb, "NL=" + iNL, (iDec > 0) && (iNL * 100 > iDec * 60));
+        sb.append("  ");
+        appendDecisionStat(sb, "ST=" + iST, (iDec > 0) && (iST * 100 > iDec * 60));
+        sb.append("  ");
+        appendDecisionStat(sb, "RA=" + iRA, false);
+        sb.append("  ");
+        appendDecisionStat(sb, "DN=" + iDN + "%", (iRA > 0) && (iDec * 100 > iRA * 30));
+        tv.setText(sb);
+    }
+    private static void appendDecisionStat(android.text.SpannableStringBuilder sb, String s, boolean bRed) {
+        int iStart = sb.length();
+        sb.append(s);
+        if ( bRed ) {
+            sb.setSpan(new android.text.style.ForegroundColorSpan(DECISION_STATS_RED), iStart, sb.length(), android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
     }
 
     /** Invoked from Appeal dialog: start the Video Ref (video review) flow for the player requesting it */
