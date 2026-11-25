@@ -3939,26 +3939,55 @@ public class ScoreBoard extends XActivity implements /*NfcAdapter.CreateNdefMess
     // ---- footer with referee decision statistics -------
     // ----------------------------------------------------
     private TextView m_tvDecisionStats = null;
-    private static final int DECISION_STATS_RED = 0xFFFF3B30;
+    private float    m_fDecisionStatsMaxSp = 36;
+    private static final int DECISION_STATS_RED = 0xFFD50000;
 
-    /** footer on the main screen: YL=4  NL=5  ST=3  RA=80  DN=22% (squash only) */
+    /** footer on the main screen: YL=4  NL=5  ST=3  RA=80  DN=22% (squash only), in a light box */
     private void addDecisionStatsFooter(FrameLayout frameLayout) {
         m_tvDecisionStats = null;
         if ( frameLayout == null ) { return; }
         if ( Brand.isNotSquash() ) { return; }
+        float fDensity = getResources().getDisplayMetrics().density;
+        m_fDecisionStatsMaxSp = ViewUtil.isLandscapeOrientation(this) ? 28 : 36;
         TextView tv = new TextView(this);
-        tv.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, ViewUtil.isLandscapeOrientation(this) ? 14 : 18);
-        tv.setTypeface(android.graphics.Typeface.MONOSPACE, android.graphics.Typeface.BOLD);
-        tv.setTextColor(0xFFFFFFFF);
-        tv.setBackgroundColor(0x99000000);
+        tv.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, m_fDecisionStatsMaxSp);
+        tv.setTypeface(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD);
+        tv.setTextColor(0xFF111111);
+        android.graphics.drawable.GradientDrawable box = new android.graphics.drawable.GradientDrawable();
+        box.setColor(0xFFF5F5F0);
+        box.setStroke((int) (2 * fDensity), 0xFF333333);
+        box.setCornerRadius(10 * fDensity);
+        tv.setBackground(box);
         tv.setGravity(android.view.Gravity.CENTER);
-        int iPad = (int) (6 * getResources().getDisplayMetrics().density);
-        tv.setPadding(iPad, iPad, iPad, iPad);
+        int iPadH = (int) (10 * fDensity), iPadV = (int) (6 * fDensity);
+        tv.setPadding(iPadH, iPadV, iPadH, iPadV);
         tv.setSingleLine(true);
+        tv.setIncludeFontPadding(false);
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT, android.view.Gravity.BOTTOM);
+        int iMargin = (int) (8 * fDensity);
+        lp.setMargins(iMargin, iMargin, iMargin, iMargin);
         frameLayout.addView(tv, lp);
+        tv.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> { if ( (r - l) != (or - ol) ) { v.post(this::fitDecisionStatsText); } });
         m_tvDecisionStats = tv;
         updateDecisionStats();
+    }
+
+    /** as big as possible (max 36sp portrait / 28sp landscape) but always on one line */
+    private void fitDecisionStatsText() {
+        TextView tv = m_tvDecisionStats;
+        if ( tv == null ) { return; }
+        int iAvail = tv.getWidth() - tv.getPaddingLeft() - tv.getPaddingRight();
+        if ( iAvail <= 0 ) { return; }
+        float fScaled = getResources().getDisplayMetrics().scaledDensity;
+        float fMaxPx  = m_fDecisionStatsMaxSp * fScaled;
+        android.graphics.Paint paint = new android.graphics.Paint(tv.getPaint());
+        paint.setTextSize(fMaxPx);
+        float fTextW = paint.measureText(String.valueOf(tv.getText()));
+        float fPx = fMaxPx;
+        if ( fTextW > iAvail ) { fPx = fMaxPx * iAvail / fTextW * 0.97f; }
+        if ( Math.abs(tv.getTextSize() - fPx) > 0.5f ) {
+            tv.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, fPx);
+        }
     }
 
     /** YL/NL/ST are decisions; RA = points + yes lets (a let is replayed); DN = decisions / RA. Red: DN > 30%, or YL/NL/ST > 60% of the decisions */
@@ -3981,6 +4010,7 @@ public class ScoreBoard extends XActivity implements /*NfcAdapter.CreateNdefMess
         sb.append("  ");
         appendDecisionStat(sb, "DN=" + iDN + "%", (iRA > 0) && (iDec * 100 > iRA * 30));
         tv.setText(sb);
+        fitDecisionStatsText();
     }
     private static void appendDecisionStat(android.text.SpannableStringBuilder sb, String s, boolean bRed) {
         int iStart = sb.length();
